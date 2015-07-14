@@ -1,6 +1,7 @@
 from openpyxl import load_workbook
 from app import app
 import redis
+import time
 
 wb = load_workbook('data.xlsx')
 s1 = wb['Sheet 1']
@@ -14,13 +15,13 @@ cell_range_name = s1['H2':'H33']
 cell_range_sector = s1['I2':'I33']
 cell_range_stage = s1['J2':'J33']
 cell_range_location = s1['K2':'K33']
+cell_range_time = s1['T2':'T33']
 
 '''
 REDIS DATA STRUCTURES
 id 						   - String
 user:id                    - Hash - user_dict
 user:id:pitch              - Hash - user_pitch_map
-user:id:pitch:time
 user:id:product:rating     - List - 
 user:id:traction:rating    - List -
 user:id:market:rating      - List -
@@ -34,8 +35,8 @@ base_redis_key = 'user'
 first_user_id = 1000
 user_id = first_user_id
 
-user_pitch_map = {'product':'','traction':'','market':'','team':'','hcp':''}
-user_dict = {'product':'','traction':'','market':'','team':'','hcp':'','email':'','name':'','sector':'','stage':'','location':'','password':'startez123','id':''}
+user_pitch_map = {'product':'','traction':'','market':'','team':'','hcp':'','time':''}
+user_dict = {'product':'','traction':'','market':'','team':'','hcp':'','email':'','name':'','sector':'','stage':'','location':'','password':'startez123','id':'','last_updated_time':''}
 ranges_list = [cell_range_product, cell_range_traction, cell_range_market, cell_range_team, cell_range_hcp, cell_range_email, cell_range_name, cell_range_sector, cell_range_stage, cell_range_location]
 
 for p,t,m,te,h,e,n,s,st,l in zip(cell_range_product, cell_range_traction, cell_range_market, cell_range_team, cell_range_hcp, cell_range_email, cell_range_name, cell_range_sector, cell_range_stage, cell_range_location):
@@ -56,7 +57,9 @@ for p,t,m,te,h,e,n,s,st,l in zip(cell_range_product, cell_range_traction, cell_r
 	user_pitch_map['market'] = m[0].value
 	user_pitch_map['team'] = te[0].value
 	user_pitch_map['hcp'] =  h[0].value
-	
+	user_pitch_map['time'] = float(time.time())
+	user_pitch_map['human_readable_time'] = time.ctime(user_pitch_map['time'])
+	user_dict['last_updated_time'] = user_pitch_map['human_readable_time']
 
 	user = base_redis_key +":"+ str(user_id)                       #mapped to user_dict
 	user_pitch = user +':'+'pitch'                                 #mapped to user_pitch_map
