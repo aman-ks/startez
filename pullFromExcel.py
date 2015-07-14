@@ -1,0 +1,98 @@
+from openpyxl import load_workbook
+from app import app
+import redis
+
+wb = load_workbook('data.xlsx')
+s1 = wb['Sheet 1']
+cell_range_product = s1['A2':'A33']
+cell_range_traction = s1['B2':'B33']
+cell_range_market = s1['C2':'C33']
+cell_range_team = s1['E2':'E33']
+cell_range_hcp = s1['F2':'F33']
+cell_range_email = s1['G2':'G33']
+cell_range_name = s1['H2':'H33']
+cell_range_sector = s1['I2':'I33']
+cell_range_stage = s1['J2':'J33']
+cell_range_location = s1['K2':'K33']
+
+'''
+REDIS DATA STRUCTURES
+id 						   - String
+user:id                    - Hash - user_dict
+user:id:pitch              - Hash - user_pitch_map
+user:id:pitch:time
+user:id:product:rating     - List - 
+user:id:traction:rating    - List -
+user:id:market:rating      - List -
+user:id:team:rating        - List - 
+
+'''
+
+users_list = []
+pitches_list = []
+base_redis_key = 'user'
+first_user_id = 1000
+user_id = first_user_id
+
+user_pitch_map = {'product':'','traction':'','market':'','team':'','hcp':''}
+user_dict = {'product':'','traction':'','market':'','team':'','hcp':'','email':'','name':'','sector':'','stage':'','location':'','password':'startez123','id':''}
+ranges_list = [cell_range_product, cell_range_traction, cell_range_market, cell_range_team, cell_range_hcp, cell_range_email, cell_range_name, cell_range_sector, cell_range_stage, cell_range_location]
+
+for p,t,m,te,h,e,n,s,st,l in zip(cell_range_product, cell_range_traction, cell_range_market, cell_range_team, cell_range_hcp, cell_range_email, cell_range_name, cell_range_sector, cell_range_stage, cell_range_location):
+	user_dict['product']= p[0].value
+	user_dict['traction']=t[0].value
+	user_dict['market']=m[0].value
+	user_dict['team']=te[0].value
+	user_dict['hcp']=h[0].value
+	user_dict['email']=e[0].value
+	user_dict['name']=n[0].value
+	user_dict['sector']=s[0].value
+	user_dict['stage']=st[0].value
+	user_dict['location']=l[0].value
+	user_dict['id'] = user_id
+
+	user_pitch_map['product'] = p[0].value
+	user_pitch_map['traction'] = t[0].value
+	user_pitch_map['market'] = m[0].value
+	user_pitch_map['team'] = te[0].value
+	user_pitch_map['hcp'] =  h[0].value
+	
+
+	user = base_redis_key +":"+ str(user_id)                       #mapped to user_dict
+	user_pitch = user +':'+'pitch'                                 #mapped to user_pitch_map
+	user_product_rating = user +":"+"product"+":"+"rating"
+	user_traction_rating = user +":"+"traction"+":"+"rating"
+	user_market_rating = user +":"+"market"+":"+"rating"
+	user_team_rating = user +":"+"team"+":"+"rating"
+
+	pitches_list.append(user_pitch_map)
+	users_list.append(user_dict)
+	user_id = user_id+1                   #increment first_user_id everytime you make an entry in the database
+    
+    # '''Time to put all of this data into redis'''
+    
+	app.redis.hmset(user, user_dict)
+	app.redis.hmset(user_pitch, user_pitch_map)
+	app.redis.lpush(user_product_rating, 0)
+	app.redis.lpush(user_traction_rating, 0)
+	app.redis.lpush(user_market_rating, 0)
+	app.redis.lpush(user_team_rating, 0)
+	app.redis.set('last_user',user_id)
+
+
+
+
+
+
+
+
+# for row in cell_range:
+# for cell in row:
+
+# print cell.value
+
+# #if '@' in str(cell.value):
+# #	i = str(cell.value).find('@')
+# #	print str(cell.value)[:i]
+# print "\n"+"*"*30+"\n"
+		
