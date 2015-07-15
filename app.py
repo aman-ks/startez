@@ -1,15 +1,16 @@
-from flask import Flask, Response, json, request
+from flask import Flask, json, request, jsonify, abort, url_for, make_response
 import redis
 
 app = Flask(__name__)
 app.redis = redis.StrictRedis(host='localhost', port= 6379, db=0)
 
+
+
 @app.route("/user/<user_id>")
 def users(user_id):
     query = 'user'+':'+user_id
     data = app.redis.hgetall(query)
-    resp = Response(json.dumps(data), status=200, mimetype='application/json')
-    return resp
+    return jsonify(data)
 
 @app.route("/user/<user_id>/pitch")
 def pitches(user_id):
@@ -17,40 +18,37 @@ def pitches(user_id):
     if not only:
         query = 'user'+':'+user_id+':'+'pitch'
         data = app.redis.hgetall(query)
-        resp = Response(json.dumps(data), status=200, mimetype='application/json')
-        return resp
+        return jsonify(data)
 
     elif only in ['product','traction','market','team','hcp']:
         query = 'user'+':'+user_id+':'+'pitch'
         data = app.redis.hgetall(query)
         
         data = data[only]
-        resp = Response(json.dumps(data), status=200, mimetype='application/json')
-        return resp
+        return jsonify({'pitch':data})
 
     else:
-        return only+' was not found!'    
+        resp = only+' was not found!'
+        return jsonify({'status':'not found','text':resp})
 
 @app.route("/user/<user_id>/ratings/<element>")
 def ratings(user_id, element):
     if element not in ['product','traction','market','team']:
-        return 'Sorry, given %s ratings are not available'%element
+        text = 'Sorry, given %s ratings are not available'%element
+        return jsonify({'status':'not found','text':text})
     else:
         query = 'user'+':'+user_id+':'+element+':'+'rating'
         rating_list = app.redis.lrange(query,0,-1)
         if not rating_list:
-            #empty or unrated
+            
             data = {'status':'unrated','all_rating':rating_list}
-            resp = Response(json.dumps(data), status=200, mimetype='application/json')
-            return resp
+            return jsonify(data)
         else:
             data = {'status':'rated','all_rating':rating_list}
-            resp = Response(json.dumps(data), status=200, mimetype='application/json')
-            return resp    
+            return jsonify(data)    
 
 @app.route("/feed", methods= ['POST','GET'])
 def feed():
-    #if request.method == 'POST':
 
     last_id = app.redis.get('last_user')
     last_id = int(last_id)
@@ -61,10 +59,7 @@ def feed():
         for user in retrieve:
             f = app.redis.hgetall(user)
             data.append(f)
-        
-
-        resp = Response(json.dumps(data), status=200, mimetype='application/json')
-        return resp
+        return jsonify({'data':data})
     
     else:
         return 'Not found'        
