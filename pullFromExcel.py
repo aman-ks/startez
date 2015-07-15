@@ -33,6 +33,7 @@ users_list = []
 pitches_list = []
 base_redis_key = 'user'
 first_user_id = 1000
+first_investor_id = 1000
 user_id = first_user_id
 
 user_pitch_map = {'product':'','traction':'','market':'','team':'','hcp':'','time':''}
@@ -84,18 +85,4 @@ for p,t,m,te,h,e,n,s,st,l in zip(cell_range_product, cell_range_traction, cell_r
 
 
 
-
-
-
-
-
-# for row in cell_range:
-# for cell in row:
-
-# print cell.value
-
-# #if '@' in str(cell.value):
-# #	i = str(cell.value).find('@')
-# #	print str(cell.value)[:i]
-# print "\n"+"*"*30+"\n"
 		

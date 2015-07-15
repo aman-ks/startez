@@ -7,13 +7,13 @@ app.redis = redis.StrictRedis(host='localhost', port= 6379, db=0)
 
 
 @app.route("/user/<user_id>")
-def users(user_id):
+def get_users(user_id):
     query = 'user'+':'+user_id
     data = app.redis.hgetall(query)
     return jsonify(data)
 
 @app.route("/user/<user_id>/pitch")
-def pitches(user_id):
+def get_pitches(user_id):
     only = request.args.get('only')
     if not only:
         query = 'user'+':'+user_id+':'+'pitch'
@@ -32,7 +32,7 @@ def pitches(user_id):
         return jsonify({'status':'not found','text':resp})
 
 @app.route("/user/<user_id>/ratings/<element>")
-def ratings(user_id, element):
+def get_ratings(user_id, element):
     if element not in ['product','traction','market','team']:
         text = 'Sorry, given %s ratings are not available'%element
         return jsonify({'status':'not found','text':text})
@@ -67,32 +67,57 @@ def feed():
 @app.route("/pref-feed", methods=['POST'])
 def nfeed():
 
-    sector = request.json.get('sector')
-    location = request.json.get('location')
-    stage = request.json.get('stage')
-    last_id = app.redis.get('last_user')
-    last_id = int(last_id)
+    if request.json:
 
-    if sector and stage and location:
-        retrieve = ['user:'+str(x) for x in range(1000,last_id)]
-        data = {}
+        sector = request.json.get('sector')
+        location = request.json.get('location')
+        stage = request.json.get('stage')
+        last_id = app.redis.get('last_user')
+        last_id = int(last_id)
 
-        for user in retrieve:
-            s = app.redis.hget(user,'sector')
-            l = app.redis.hget(user,'location')
-            st = app.redis.hget(user,'stage')
-            
-            if s==sector and l==location and st==stage:
-                key_user_id = app.redis.hget(user,'id')
-                value_user_data = app.redis.hgetall(user)
-                data[key_user_id] = value_user_data 
+        if sector and stage and location:
+            retrieve = ['user:'+str(x) for x in range(1000,last_id)]
+            data = {}
 
-        return jsonify({'data':data})
+            for user in retrieve:
+                s = app.redis.hget(user,'sector')
+                l = app.redis.hget(user,'location')
+                st = app.redis.hget(user,'stage')
+                
+                if s==sector and l==location and st==stage:
+                    key_user_id = app.redis.hget(user,'id')
+                    value_user_data = app.redis.hgetall(user)
+                    data[key_user_id] = value_user_data 
 
-    else:
-        return jsonify({'status':'not found','text':'Could not find the respective filters.'})    
+            return jsonify({'data':data})
 
-# @app.route("/investors")
+        else:
+            return jsonify({'status':'not found','text':'Could not find the respective filters.'})
+    
+
+    elif not request.json:
+        abort(404)
+
+@app.route("/allinvestors", methods=['GET'])
+def get_investors():
+    pass
+@app.route("/investor/<investor_id>", methods=['GET'])
+def get_investor():
+    pass
+
+
+@app.route("/investors", methods=['POST'])
+def create_investor():
+    last_inv_id = app.redis.get('last_investor')
+    new_inv_key = 'investor'+':'+last_inv_id
+    pass
+
+@app.route("/investor/<investor_id>", methods=['PUT'])
+def update_investor_info():
+    pass
+@app.route("/investor/<investor_id>", methods=['DELETE'])
+def delete_investor():
+    pass
     
 if __name__ == "__main__":
     port = 5000
