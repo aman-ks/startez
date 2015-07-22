@@ -22,16 +22,14 @@ REDIS DATA STRUCTURES
 id 						   - String
 user:id                    - Hash - user_dict
 user:id:pitch              - Hash - user_pitch_map
-user:id:product:rating     - List - 
-user:id:traction:rating    - List -
-user:id:market:rating      - List -
-user:id:team:rating        - List - 
+
 
 '''
 
 users_list = []
 pitches_list = []
 base_redis_key = 'user'
+all_users_key = 'allusers'
 first_user_id = 1000
 first_investor_id = 1000
 user_id = first_user_id
@@ -77,10 +75,7 @@ for p,t,m,te,h,e,n,s,st,l in zip(cell_range_product, cell_range_traction, cell_r
     
 	app.redis.hmset(user, user_dict)
 	app.redis.hmset(user_pitch, user_pitch_map)
-	app.redis.lpush(user_product_rating, 0)
-	app.redis.lpush(user_traction_rating, 0)
-	app.redis.lpush(user_market_rating, 0)
-	app.redis.lpush(user_team_rating, 0)
+	app.redis.hset(all_users_key, user, user_dict['email'])
 	app.redis.set('last_user',user_id)
 
 
