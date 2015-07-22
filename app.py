@@ -1,5 +1,5 @@
 from flask import Flask, json, request, jsonify, abort, url_for, make_response
-import redis
+import redis, random
 
 app = Flask(__name__)
 app.redis = redis.StrictRedis(host='localhost', port= 6379, db=0)
@@ -117,11 +117,12 @@ investors:signup:refcode   - List - signup_code_list
 def get_investors():
     data = app.redis.hgetall('allinvestors')
     return jsonify(data)
-    
-@app.route("/investor/<investor_id>", methods=['GET'])
-def get_investor():
-    pass
 
+@app.route("/investor/<investor_id>", methods=['GET'])
+def get_investor(investor_id):
+    query = 'investor'+':'+investor_id
+    data = app.redis.hgetall(query)
+    return jsonify(data)
 
 @app.route("/investors", methods=['POST'])
 def create_investor():
@@ -133,7 +134,7 @@ def create_investor():
         organisation = request.json.get('organisation')
         insti_email = request.json.get('insti_email')
         source_referral_code = request.json.get('source_referral_code')
-        share_referral_code = request.json.get('share_referral_code')
+         
         signup_code_list = app.redis.lrange('investors:signup:refcode',0,-1)
 
         if source_referral_code in signup_code_list:
@@ -149,6 +150,8 @@ def create_investor():
                 investor_dict['insti_email'] = insti_email
                 investor_dict['password'] = password
                 investor_dict['source_referral_code'] = source_referral_code
+                referral_code = lambda name: name[0:3]+str(random.randint(100,999))
+                investor_dict['share_referral_code'] = referral_code(name)
                 app.redis.hmset(new_inv_key, investor_dict)
                 app.redis.hset(all_investors_key, new_inv_key, investor_dict['insti_email'])
                 app.redis.incr('last_investor')
