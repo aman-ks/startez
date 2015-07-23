@@ -142,7 +142,7 @@ def create_investor():
 
             last_inv_id = int(last_inv_id) + 1
             new_inv_key = 'investor'+':'+str(last_inv_id)
-            investor_dict = {'name':'','password':'','organisation':'','insti_email':'','source_referral_code':'','share_referral_code':'','id':''}
+            investor_dict = {'name':'','password':'','organisation':'','insti_email':'','source_referral_code':'','share_referral_code':'','id':'','credits':'100'}
             all_investors_key = 'allinvestors'
             if name and insti_email and password:
                 investor_dict['id'] = last_inv_id
@@ -164,7 +164,12 @@ def create_investor():
 
 @app.route("/investor/<investor_id>", methods=['PUT'])
 def update_investor_info():
+    query = 'investor'+':'+investor_id
+    temp_investor_dict = app.redis.hgetall(query)
+    
+
     pass
+    
 @app.route("/investor/<investor_id>", methods=['DELETE'])
 def delete_investor():
     pass
