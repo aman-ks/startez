@@ -3,19 +3,19 @@ from app import app
 import redis
 import time
 
-wb = load_workbook('data.xlsx')
+wb = load_workbook('data_new.xlsx')
 s1 = wb['Sheet 1']
-cell_range_product = s1['A2':'A33']
-cell_range_traction = s1['B2':'B33']
-cell_range_market = s1['C2':'C33']
-cell_range_team = s1['E2':'E33']
-cell_range_hcp = s1['F2':'F33']
-cell_range_email = s1['G2':'G33']
-cell_range_name = s1['H2':'H33']
-cell_range_sector = s1['I2':'I33']
-cell_range_stage = s1['J2':'J33']
-cell_range_location = s1['K2':'K33']
-cell_range_time = s1['T2':'T33']
+cell_range_product = s1['A2':'A132']
+cell_range_traction = s1['B2':'B132']
+cell_range_market = s1['C2':'C132']
+cell_range_team = s1['E2':'E132']
+cell_range_hcp = s1['F2':'F132']
+cell_range_email = s1['G2':'G132']
+cell_range_name = s1['H2':'H132']
+cell_range_sector = s1['I2':'I132']
+cell_range_stage = s1['J2':'J132']
+cell_range_location = s1['K2':'K132']
+# cell_range_time = s1['T2':'T33']
 
 '''
 REDIS DATA STRUCTURES
