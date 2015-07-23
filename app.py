@@ -1,6 +1,5 @@
 from flask import Flask, json, request, jsonify, abort, url_for, make_response
 import redis, random
-
 app = Flask(__name__)
 app.redis = redis.StrictRedis(host='localhost', port= 6379, db=0)
 
@@ -150,29 +149,46 @@ def create_investor():
                 investor_dict['insti_email'] = insti_email
                 investor_dict['password'] = password
                 investor_dict['source_referral_code'] = source_referral_code
+                
                 referral_code = lambda name: name[0:3]+str(random.randint(100,999))
+                
                 investor_dict['share_referral_code'] = referral_code(name)
+                app.redis.lpush('investors:signup:refcode',investor_dict['share_referral_code'])
                 app.redis.hmset(new_inv_key, investor_dict)
                 app.redis.hset(all_investors_key, new_inv_key, investor_dict['insti_email'])
                 app.redis.incr('last_investor')
-                return jsonify({'status':'done','text':'Investor with information '+str(investor_dict)})
+                app.redis.save()
+                return jsonify({'status':'done','text':'Investor with information '+str(investor_dict)+'has been initialised'})
         else:
 
             return jsonify({'status':'invalid code', 'text':'The Referral Code enterred by you is invalid'})       
     elif not request.json:
         abort(404)
 
-@app.route("/investor/<investor_id>", methods=['PUT'])
-def update_investor_info():
-    query = 'investor'+':'+investor_id
-    temp_investor_dict = app.redis.hgetall(query)
-    
+@app.route("/investor/<investor_id>/photo", methods=['PUT'])
+def update_investor_photo(investor_id):
+    key = 'investor'+':'+investor_id
+    data = app.redis.hgetall(key)
 
-    pass
+    if not data:
+        return jsonify({'status':'not found','text':'Investor with id %s not found'%investor_id})
+    elif 'name' in data.keys():
+        photo_key = 'photo'
+        value = request.files['photo']
+        #remember to add a directory to save the images there, while on production.
+        value.save(secure_filename(value.filename))
+        app.redis.hset(key, photo_key, value.filename)
+        return jsonify({'status':'done','text':'Investor photo has been set'})
+    
     
 @app.route("/investor/<investor_id>", methods=['DELETE'])
-def delete_investor():
-    pass
+def delete_investor(investor_id):
+    hash_name = 'investor'+':'+investor_id
+    value = app.redis.hget(hash_name,'share_referral_code')
+    app.redis.lrem('investors:signup:refcode', 1, value)
+    app.redis.hdel(hash_name,'name','password','organisation','insti_email','source_referral_code','share_referral_code','id','credits','photo')
+
+    return jsonify({'status':'done','text':'Deleted investor with id number %s'%investor_id})
     
 if __name__ == "__main__":
     port = 5000
