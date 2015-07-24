@@ -1,9 +1,29 @@
 from flask import Flask, json, request, jsonify, abort, url_for, make_response
 import redis, random
+from flask.ext.httpauth import HTTPBasicAuth
+from passlib.apps import custom_app_context
+
+auth = HTTPBasicAuth()
 app = Flask(__name__)
 app.redis = redis.StrictRedis(host='localhost', port= 6379, db=0)
 
 
+def verify_password(password, password_hash):
+    return pwd_context.verify(password, password_hash)
+
+@auth.get_password
+def get_password(email):
+    bool = app.redis.hexists('allinvestors',email)
+    if bool:
+        investor_id = app.redis.hget('allinvestors',email)
+        password = app.redis.hget(investor_id,'password')
+        return password
+    else:
+        return None
+
+@auth.error_handler
+def unauthorized():
+    return make_response(jsonify({'error': 'Unauthorized access'}), 403)
 
 @app.route("/user/<user_id>")
 def get_users(user_id):
@@ -113,11 +133,14 @@ investors:signup:refcode   - List - signup_code_list
 '''
 
 @app.route("/allinvestors", methods=['GET'])
+@auth.login_required
 def get_investors():
     data = app.redis.hgetall('allinvestors')
     return jsonify(data)
 
+
 @app.route("/investor/<investor_id>", methods=['GET'])
+@auth.login_required
 def get_investor(investor_id):
     query = 'investor'+':'+investor_id
     data = app.redis.hgetall(query)
@@ -147,7 +170,8 @@ def create_investor():
                 investor_dict['id'] = last_inv_id
                 investor_dict['name'] = name
                 investor_dict['insti_email'] = insti_email
-                investor_dict['password'] = password
+                password_hash = pwd_context.encrypt(password)
+                investor_dict['password'] = password_hash
                 investor_dict['source_referral_code'] = source_referral_code
                 
                 referral_code = lambda name: name[0:3]+str(random.randint(100,999))
@@ -155,7 +179,7 @@ def create_investor():
                 investor_dict['share_referral_code'] = referral_code(name)
                 app.redis.lpush('investors:signup:refcode',investor_dict['share_referral_code'])
                 app.redis.hmset(new_inv_key, investor_dict)
-                app.redis.hset(all_investors_key, new_inv_key, investor_dict['insti_email'])
+                app.redis.hset(all_investors_key, investor_dict['insti_email'], new_inv_key)
                 app.redis.incr('last_investor')
                 app.redis.save()
                 return jsonify({'status':'done','text':'Investor with information '+str(investor_dict)+'has been initialised'})

@@ -75,7 +75,7 @@ for p,t,m,te,h,e,n,s,st,l in zip(cell_range_product, cell_range_traction, cell_r
     
 	app.redis.hmset(user, user_dict)
 	app.redis.hmset(user_pitch, user_pitch_map)
-	app.redis.hset(all_users_key, user, user_dict['email'])
+	app.redis.hset(all_users_key, user_dict['email'], user)
 	app.redis.set('last_user',user_id)
 
 
