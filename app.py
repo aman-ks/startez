@@ -1,29 +1,70 @@
 from flask import Flask, json, request, jsonify, abort, url_for, make_response
-import redis, random
+import redis, random, os
 from flask.ext.httpauth import HTTPBasicAuth
-from passlib.apps import custom_app_context
+from passlib.apps import custom_app_context as pwd_context
+from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 
 auth = HTTPBasicAuth()
 app = Flask(__name__)
+app.config['SECRET_KEY']='startezifyoucan'
 app.redis = redis.StrictRedis(host='localhost', port= 6379, db=0)
 
 
-def verify_password(password, password_hash):
-    return pwd_context.verify(password, password_hash)
+'''
+Going to use these 2 methods directly:
+pwd_context.verify : method takes a plain password and hash as argument and returns True if the password is correct or False if not.
+pwd_context.encrypt : method takes a plain password as argument and returns a hash of it with the user.
 
-@auth.get_password
-def get_password(email):
-    bool = app.redis.hexists('allinvestors',email)
-    if bool:
-        investor_id = app.redis.hget('allinvestors',email)
-        password = app.redis.hget(investor_id,'password')
-        return password
-    else:
-        return None
+'''
+
+
+
+def generate_auth_token(investor_id, expiration=2592000):
+	s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
+	return s.dumps({ 'id': investor_id })
+
+def verify_auth_token(token):
+    s = Serializer(app.config['SECRET_KEY'])
+    try:
+        data = s.loads(token)
+        print data
+    except SignatureExpired:
+        return None # valid token, but expired
+    except BadSignature:
+        return None # invalid token
+    user_data = app.redis.hgetall('investor'+':'+str(data['id']))
+    print user_data
+    return user_data
+
+
+@auth.verify_password
+def verify_password(email_or_token,plain_password):
+	#first try to authenticate using token
+	user_data = verify_auth_token(email_or_token)
+	if not user_data:
+		#try to authenticate with username password
+	    bool = app.redis.hexists('allinvestors',email_or_token)
+	    if bool:
+	        investor_id = app.redis.hget('allinvestors',email_or_token)
+	        password = app.redis.hget(investor_id,'password')
+	        if not pwd_context.verify(plain_password, password):
+	        	return False
+	        elif pwd_context.verify(plain_password,password):
+	        	return True
+	    else:
+	    	return False
+	return True
+
 
 @auth.error_handler
 def unauthorized():
     return make_response(jsonify({'error': 'Unauthorized access'}), 403)
+
+@app.route('/api/token/<investor_id>')
+@auth.login_required
+def get_auth_token(investor_id):
+    token = generate_auth_token(investor_id)
+    return jsonify({ 'token': token.decode('ascii') })
 
 @app.route("/user/<user_id>")
 def get_users(user_id):
@@ -164,12 +205,13 @@ def create_investor():
 
             last_inv_id = int(last_inv_id) + 1
             new_inv_key = 'investor'+':'+str(last_inv_id)
-            investor_dict = {'name':'','password':'','organisation':'','insti_email':'','source_referral_code':'','share_referral_code':'','id':'','credits':'100'}
+            investor_dict = {'name':'','password':'','organisation':'','insti_email':'','source_referral_code':'','share_referral_code':'','credits':'100'}
             all_investors_key = 'allinvestors'
             if name and insti_email and password:
                 investor_dict['id'] = last_inv_id
                 investor_dict['name'] = name
                 investor_dict['insti_email'] = insti_email
+                #function has been used directly from passlib
                 password_hash = pwd_context.encrypt(password)
                 investor_dict['password'] = password_hash
                 investor_dict['source_referral_code'] = source_referral_code
