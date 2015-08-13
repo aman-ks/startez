@@ -1,8 +1,6 @@
 
 *.pyc
 
-*.xlsx
-
 *.rdb
 
 *.md~
