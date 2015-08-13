@@ -3,7 +3,7 @@ from app import app
 import redis
 import time
 
-wb = load_workbook('data_new.xlsx')
+wb = load_workbook('data/data_new.xlsx')
 s1 = wb['Sheet 1']
 cell_range_product = s1['A2':'A132']
 cell_range_traction = s1['B2':'B132']
