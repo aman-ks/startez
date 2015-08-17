@@ -3,6 +3,8 @@ import redis, random, os
 from flask.ext.httpauth import HTTPBasicAuth
 from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
+from time import time, ctime
+from types import *
 
 auth = HTTPBasicAuth()
 app = Flask(__name__)
@@ -167,7 +169,7 @@ user:id:pitch              - Hash - user_pitch_map
 user:id:gotratedby         - List - user_got_rated_by : investor:id 
 
 investor:id                - Hash - investor_dict : name, organisation, insti_email, source_referral_code, share_referral_code, id
-investor:id:rated:user:id  - Hash - investor_rated_user_dict : product, traction, market, team (rating), time
+investor:id:rated:user:id  - Hash - investor_rated_user_dict : product_rating, traction_rating, market_rating, team_rating, time
 investor:id:rated          - Hash - investor_rated_map : user:id (average rating)
 
 investors:signup:refcode   - List - signup_code_list
@@ -186,6 +188,8 @@ def get_investor(investor_id):
     query = 'investor'+':'+investor_id
     data = app.redis.hgetall(query)
     return jsonify(data)
+
+
 
 @app.route("/investors", methods=['POST'])
 def create_investor():
@@ -231,6 +235,8 @@ def create_investor():
     elif not request.json:
         abort(404)
 
+
+
 @app.route("/investor/<investor_id>/photo", methods=['PUT'])
 def update_investor_photo(investor_id):
     key = 'investor'+':'+investor_id
@@ -246,6 +252,8 @@ def update_investor_photo(investor_id):
         app.redis.hset(key, photo_key, value.filename)
         return jsonify({'status':'done','text':'Investor photo has been set'})
     
+
+
     
 @app.route("/investor/<investor_id>", methods=['DELETE'])
 def delete_investor(investor_id):
@@ -255,6 +263,46 @@ def delete_investor(investor_id):
     app.redis.hdel(hash_name,'name','password','organisation','insti_email','source_referral_code','share_referral_code','id','credits','photo')
 
     return jsonify({'status':'done','text':'Deleted investor with id number %s'%investor_id})
+
+
+
+@app.route("/investor/<investor_id>/rate/<user_id>", methods=['POST'])
+def rate_user(investor_id, user_id):
+    if request.json:
+        investor_rated_user_dict = {}
+        key = 'investor'+':'+investor_id+':'+'rated'+':'+'user'+':'+user_id
+
+        p_r = request.json.get('product_rating')
+        m_r = request.json.get('market_rating')
+        tr_r = request.json.get('traction_rating')
+        t_r = request.json.get('team_rating')
+        rating_time = ctime(time())
+        print type(p_r), type(m_r), type(tr_r), type(t_r)
+
+        if type(p_r) is FloatType and type(m_r) is FloatType and type(tr_r) is FloatType and type(t_r) is FloatType:
+            investor_rated_user_dict['product_rating'] = p_r
+            investor_rated_user_dict['traction_rating'] = tr_r
+            investor_rated_user_dict['market_rating'] = m_r
+            investor_rated_user_dict['team_rating'] = t_r
+            investor_rated_user_dict['time'] = rating_time
+
+            app.redis.hmset(key, investor_rated_user_dict)
+            app.redis.save()
+            return jsonify({'status':'done','text':'Investor with id '+investor_id+' has rated user with id '+user_id+' with ratings'+str(investor_rated_user_dict)+' .'})
+        else:
+            return jsonify({'status':'not rated','text':'Ratings are not of FloatType'})    
+
+
+
+
+    elif not request.json:
+        abort(404)    
+
+
+
+    
+    
+
     
 if __name__ == "__main__":
     port = 5000
