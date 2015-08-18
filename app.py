@@ -305,5 +305,5 @@ def rate_user(investor_id, user_id):
 
     
 if __name__ == "__main__":
-    port = 5000
+    port = 80
     app.run(host='0.0.0.0', port=port, debug=True)
