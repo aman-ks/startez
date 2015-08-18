@@ -176,14 +176,14 @@ investors:signup:refcode   - List - signup_code_list
 '''
 
 @app.route("/allinvestors", methods=['GET'])
-@auth.login_required
+#@auth.login_required
 def get_investors():
     data = app.redis.hgetall('allinvestors')
     return jsonify(data)
 
 
 @app.route("/investor/<investor_id>", methods=['GET'])
-@auth.login_required
+#@auth.login_required
 def get_investor(investor_id):
     query = 'investor'+':'+investor_id
     data = app.redis.hgetall(query)
@@ -228,7 +228,7 @@ def create_investor():
                 app.redis.hset(all_investors_key, investor_dict['insti_email'], new_inv_key)
                 app.redis.incr('last_investor')
                 app.redis.save()
-                return jsonify({'status':'done','text':'Investor with information '+str(investor_dict)+'has been initialised'})
+                return jsonify({'data':investor_dict,'status':'done','text':'Investor with information has been initialised'})
         else:
 
             return jsonify({'status':'invalid code', 'text':'The Referral Code enterred by you is invalid'})       
@@ -299,11 +299,15 @@ def rate_user(investor_id, user_id):
         abort(404)    
 
 
-
+@app.route("/investor/<investor_id>/getrating/<user_id>", methods=['GET'])
+def get_rating_investor(investor_id, user_id):
+	query = 'investor'+':'+investor_id+':'+'rated'+':'+'user'+':'+user_id
+	data = app.redis.hgetall(query)
+	return jsonify(data)
     
     
 
     
 if __name__ == "__main__":
-    port = 80
-    app.run(host='0.0.0.0', port=port, debug=True)
+    
+    app.run(host='0.0.0.0', debug=True)
