@@ -290,10 +290,10 @@ def rate_user(investor_id, user_id):
 
             rv = app.redis.hset(user_key, 'product_rating', str(p_r))
             print "This is the return value for hset : "+str(rv)
-            rv1 = app.redis.hsetnx(user_key, 'traction_rating', str(tr_r))
-            rv2 = app.redis.hsetnx(user_key, 'market_rating', str(m_r))
-            rv3 = app.redis.hsetnx(user_key, 'team_rating', str(t_r))
-            rv4 = app.redis.hsetnx(user_key, 'average_rating', str(av_r))
+            rv1 = app.redis.hset(user_key, 'traction_rating', str(tr_r))
+            rv2 = app.redis.hset(user_key, 'market_rating', str(m_r))
+            rv3 = app.redis.hset(user_key, 'team_rating', str(t_r))
+            rv4 = app.redis.hset(user_key, 'average_rating', str(av_r))
             print "This is executing rv1 %d rv2 %d rv3 %d rv4 %d"%(rv1, rv2, rv3, rv4) 
 
 
