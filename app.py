@@ -297,7 +297,6 @@ def rate_user(investor_id, user_id):
             print "This is executing rv1 %d rv2 %d rv3 %d rv4 %d"%(rv1, rv2, rv3, rv4) 
 
 
-
             app.redis.hmset(key, investor_rated_user_dict)
             app.redis.save()
             return jsonify({'status':'done','text':'Investor with id '+investor_id+' has rated user with id '+user_id+' with ratings'+str(investor_rated_user_dict)+' .'})
