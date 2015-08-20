@@ -271,6 +271,7 @@ def rate_user(investor_id, user_id):
     if request.json:
         investor_rated_user_dict = {}
         key = 'investor'+':'+investor_id+':'+'rated'+':'+'user'+':'+user_id
+        user_key = 'user'+':'+user_id
 
         p_r = request.json.get('product_rating')
         m_r = request.json.get('market_rating')
@@ -285,6 +286,17 @@ def rate_user(investor_id, user_id):
             investor_rated_user_dict['market_rating'] = m_r
             investor_rated_user_dict['team_rating'] = t_r
             investor_rated_user_dict['time'] = rating_time
+            av_r = (p_r+t_r+m_r+tr_r)/4
+
+            rv = app.redis.hset(user_key, 'product_rating', str(p_r))
+            print "This is the return value for hset : "+str(rv)
+            rv1 = app.redis.hsetnx(user_key, 'traction_rating', str(tr_r))
+            rv2 = app.redis.hsetnx(user_key, 'market_rating', str(m_r))
+            rv3 = app.redis.hsetnx(user_key, 'team_rating', str(t_r))
+            rv4 = app.redis.hsetnx(user_key, 'average_rating', str(av_r))
+            print "This is executing rv1 %d rv2 %d rv3 %d rv4 %d"%(rv1, rv2, rv3, rv4) 
+
+
 
             app.redis.hmset(key, investor_rated_user_dict)
             app.redis.save()
