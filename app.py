@@ -145,7 +145,15 @@ def feed():
 		qu = q[0].split(' ')
 		print qu
 		result = keyword_search(qu, all_data)
-		return jsonify({'data':result})        
+
+		pipe1 = app.redis.pipeline()
+
+		for user in result:
+			pipe1.hgetall(user)
+
+		search_result = pipe1.execute()	
+
+		return jsonify({'data':search_result})        
 
 @app.route("/pref-feed", methods=['POST'])
 def nfeed():
