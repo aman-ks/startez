@@ -5,6 +5,7 @@ from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 from time import time, ctime
 from types import *
+from search import keyword_search
 
 auth = HTTPBasicAuth()
 app = Flask(__name__)
@@ -112,20 +113,39 @@ def get_ratings(user_id):
 
 @app.route("/feed")
 def feed():
+	q = request.args.getlist('q')
+	if not q:	
+	    last_id = app.redis.get('last_user')
+	    last_id = int(last_id)
+	    if last_id != 1000:
+	    	pipe = app.redis.pipeline()
+	        retrieve = ['user:'+str(x) for x in range(1000,last_id)]
+	        data = []
 
-    last_id = app.redis.get('last_user')
-    last_id = int(last_id)
-    if last_id != 1000:
-        retrieve = ['user:'+str(x) for x in range(1000,last_id)]
-        data = []
+	        for user in retrieve:
+	            pipe.hgetall(user)
 
-        for user in retrieve:
-            f = app.redis.hgetall(user)
-            data.append(f)
-        return jsonify({'data':data})
-    
-    else:
-        return 'Not found'        
+	        data = pipe.execute()    
+	        return jsonify({'data':data})
+	else:
+		last_id = app.redis.get('last_user')
+		last_id = int(last_id)
+		pipe = app.redis.pipeline()
+		retrieve = ['user:'+str(x) for x in range(1000,last_id)]
+		all_data = []
+
+		for user in retrieve:
+			pipe.hgetall(user)
+		
+		all_data = 	pipe.execute()
+		'''
+		Calling the keyword search function with data of all users and list of keywords : q
+		'''
+		print "q is : "+str(q)
+		qu = q[0].split(' ')
+		print qu
+		result = keyword_search(qu, all_data)
+		return jsonify({'data':result})        
 
 @app.route("/pref-feed", methods=['POST'])
 def nfeed():
@@ -174,6 +194,10 @@ investor:id:rated          - Hash - investor_rated_map : user:id (average rating
 
 investors:signup:refcode   - List - signup_code_list
 '''
+
+@app.route("/", methods=['GET'])
+def welcome_message():
+	return "Welcome to StartEZ"
 
 @app.route("/allinvestors", methods=['GET'])
 #@auth.login_required
