@@ -3,18 +3,18 @@ from app import app
 import redis
 import time
 
-wb = load_workbook('data/data_new.xlsx')
+wb = load_workbook('data/oldAndDemo.xlsx')
 s1 = wb['Sheet 1']
-cell_range_product = s1['A2':'A132']
-cell_range_traction = s1['B2':'B132']
-cell_range_market = s1['C2':'C132']
-cell_range_team = s1['D2':'D132']
-cell_range_hcp = s1['E2':'E132']
-cell_range_email = s1['F2':'F132']
-cell_range_name = s1['G2':'G132']
-cell_range_sector = s1['H2':'H132']
-cell_range_stage = s1['I2':'I132']
-cell_range_location = s1['J2':'J132']
+cell_range_product = s1['A2':'A133']
+cell_range_traction = s1['B2':'B133']
+cell_range_market = s1['C2':'C133']
+cell_range_team = s1['D2':'D133']
+cell_range_hcp = s1['E2':'E133']
+cell_range_email = s1['F2':'F133']
+cell_range_name = s1['G2':'G133']
+cell_range_sector = s1['H2':'H133']
+cell_range_stage = s1['I2':'I133']
+cell_range_location = s1['J2':'J133']
 # cell_range_time = s1['T2':'T33']
 
 '''

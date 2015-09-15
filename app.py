@@ -120,6 +120,7 @@ def feed():
 	    if last_id != 1000:
 	    	pipe = app.redis.pipeline()
 	        retrieve = ['user:'+str(x) for x in range(1000,last_id)]
+	        retrieve
 	        data = []
 
 	        for user in retrieve:
