@@ -343,6 +343,28 @@ def rate_user(investor_id, user_id):
         abort(404)    
 
 
+@app.route("/investor/<investor_id>/favourite/<user_id>", methods=['GET'])
+def favourite_user(investor_id, user_id):
+    
+    key = 'investor'+':'+investor_id+':'+'fav'
+    user_key = 'user'+':'+user_id
+
+    if app.redis.sismember(key, user_key):
+        app.redis.srem(key,user_key)
+        return "removed from set"
+    else:
+        app.redis.sadd(key,user_key)
+        return "added to set"    
+    
+
+@app.route("/investor/<investor_id>/favourites", methods=['GET'])
+def show_all_fav(investor_id):
+    query = 'investor'+':'+investor_id+':'+'fav'
+    data = app.redis.smembers(query)
+    return jsonify({"key":list(data)})
+
+
+
 @app.route("/investor/<investor_id>/getrating/<user_id>", methods=['GET'])
 def get_rating_investor(investor_id, user_id):
 	query = 'investor'+':'+investor_id+':'+'rated'+':'+'user'+':'+user_id
