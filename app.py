@@ -255,7 +255,7 @@ def create_investor():
                 
                 referral_code = lambda name: name[0:3]+str(random.randint(100,999))
                 
-                investor_dict['share_referral_code'] = referral_code(name)
+                investor_dict['share_referral_code'] = referral_code(name.upper())
                 app.redis.lpush('investors:signup:refcode',investor_dict['share_referral_code'])
                 app.redis.hmset(new_inv_key, investor_dict)
                 app.redis.hset(all_investors_key, investor_dict['insti_email'], new_inv_key)
@@ -335,8 +335,6 @@ def rate_user(investor_id, user_id):
             return jsonify({'status':'done','text':'Investor with id '+investor_id+' has rated user with id '+user_id+' with ratings'+str(investor_rated_user_dict)+' .'})
         else:
             return jsonify({'status':'not rated','text':'Ratings are not of FloatType'})    
-
-
 
 
     elif not request.json:
