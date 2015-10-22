@@ -10,6 +10,7 @@ from search import keyword_search
 auth = HTTPBasicAuth()
 app = Flask(__name__)
 app.config['SECRET_KEY']='startezifyoucan'
+SENDGRID_API_KEY = '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'
 app.redis = redis.StrictRedis(host='localhost', port= 6379, db=0)
 
 
@@ -354,12 +355,26 @@ def favourite_user(investor_id, user_id):
         app.redis.sadd(key,user_key)
         return "added to set"    
     
+'''
+Endpoint below can be used when retrieving the contents of MyList/ Favourites.
+Simple GET request from web/ mobile client will work.
+'''
 
 @app.route("/investor/<investor_id>/favourites", methods=['GET'])
 def show_all_fav(investor_id):
     query = 'investor'+':'+investor_id+':'+'fav'
-    data = app.redis.smembers(query)
-    return jsonify({"key":list(data)})
+    members = app.redis.smembers(query)
+    pipe = app.redis.pipeline()
+    retrieve = list(members)
+    
+    data = []
+
+    for user in retrieve:
+        pipe.hgetall(user)
+
+    data = pipe.execute()    
+    return jsonify({'data':data})
+    
 
 
 
@@ -370,7 +385,10 @@ def get_rating_investor(investor_id, user_id):
 	return jsonify(data)
     
     
-
+@app.route("/investor/refcode", methods=['GET'])
+def get_all_refcodes():
+    signup_code_list = app.redis.lrange('investors:signup:refcode',0,-1)
+    return jsonify({'Working Referral Codes':signup_code_list})
     
 if __name__ == "__main__":
     
