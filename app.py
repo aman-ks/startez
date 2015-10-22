@@ -350,10 +350,10 @@ def favourite_user(investor_id, user_id):
 
     if app.redis.sismember(key, user_key):
         app.redis.srem(key,user_key)
-        return "removed from set"
+        return jsonify({'status':'removed','text':'User was removed from favourites'})
     else:
         app.redis.sadd(key,user_key)
-        return "added to set"    
+        return jsonify({'status':'added','text':'User was added to favourites'})    
     
 '''
 Endpoint below can be used when retrieving the contents of MyList/ Favourites.
