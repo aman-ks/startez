@@ -273,7 +273,7 @@ def create_investor():
 
                 subject = 'Thank you for signing up on StartEZ'
                 text = 'Welcome to the StartEZ Platform'
-                html = '<h2>Welcome to the StartEZ Platform</h2>'
+                html = '<h2>Welcome to the StartEZ Platform</h2><body>We are currently under development. You shall soon see a more fancier email</body>'
                 to = insti_email
                 mail_result = q.enqueue(t_email, subject, to, text, html)
                 print mail_result
@@ -403,7 +403,7 @@ def investor_user_connect(investor_id, user_id):
     text = 'Investor '+inv_info["name"]+' connected with founder '+user_info["name"]
     html = '<h2>Investor '+inv_info["name"]+' connected with founder '+user_info["name"]+'</h2>'
     #to = 'contact@startez.co'
-    to = 'eamanshrivastava@gmail.com'
+    to = 'culture.dawle@gmail.com'
     mail_result = q.enqueue(t_email, subject, to, text, html)
     return str(inv_info)+str(user_info)
 
