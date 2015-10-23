@@ -393,6 +393,19 @@ def show_all_fav(investor_id):
     data = pipe.execute()    
     return jsonify({'data':data})
     
+@app.route("/investor/<investor_id>/connect/<user_id>", methods=['GET'])
+def investor_user_connect(investor_id, user_id):
+
+    inv_info = app.redis.hgetall('investor:'+investor_id)
+    user_info = app.redis.hgetall('user:'+user_id)
+
+    subject = 'Investor Connected to Startup'
+    text = 'Investor '+inv_info["name"]+' connected with founder '+user_info["name"]
+    html = '<h2>Investor '+inv_info["name"]+' connected with founder '+user_info["name"]+'</h2>'
+    #to = 'contact@startez.co'
+    to = 'eamanshrivastava@gmail.com'
+    mail_result = q.enqueue(t_email, subject, to, text, html)
+    return str(inv_info)+str(user_info)
 
 
 
