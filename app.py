@@ -5,13 +5,18 @@ from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer as Serializer, BadSignature, SignatureExpired)
 from time import time, ctime
 from types import *
+from rq import Queue
 from search import keyword_search
+from send_mail import t_email
+
 
 auth = HTTPBasicAuth()
 app = Flask(__name__)
 app.config['SECRET_KEY']='startezifyoucan'
 SENDGRID_API_KEY = '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'
 app.redis = redis.StrictRedis(host='localhost', port= 6379, db=0)
+q = Queue(connection = app.redis)
+
 
 
 '''
@@ -20,6 +25,8 @@ pwd_context.verify : method takes a plain password and hash as argument and retu
 pwd_context.encrypt : method takes a plain password as argument and returns a hash of it with the user.
 
 '''
+
+
 
 
 
@@ -262,6 +269,17 @@ def create_investor():
                 app.redis.hset(all_investors_key, investor_dict['insti_email'], new_inv_key)
                 app.redis.incr('last_investor')
                 app.redis.save()
+
+
+                subject = 'Thank you for signing up on StartEZ'
+                text = 'Welcome to the StartEZ Platform'
+                html = '<h2>Welcome to the StartEZ Platform</h2>'
+                to = insti_email
+                mail_result = q.enqueue(t_email, subject, to, text, html)
+                print mail_result
+
+
+
                 return jsonify({'data':investor_dict,'status':'done','text':'Investor with information has been initialised'})
         else:
 
